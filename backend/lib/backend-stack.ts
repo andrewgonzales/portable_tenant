@@ -17,6 +17,8 @@ import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 
 import { TenantStage } from "./types";
 
+const JWT_REGEX = "eyJ[A-Za-z0-9-_]+.eyJ[A-Za-z0-9-_]+.[A-Za-z0-9-_.+/]*";
+
 export class BackendStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
@@ -43,15 +45,17 @@ export class BackendStack extends Stack {
       runtime: Runtime.NODEJS_20_X,
       description: `Authorizer: ${new Date().toISOString()}`,
       entry: path.join(__dirname, "..", "src/authorizer/index.ts"),
-      environment: {},
+      environment: {
+        JWT_AUDIENCE: "https://portable-tenant-jwt-authorizer",
+        JWT_ISSUER: "https://dev-jkt2t1ffhfzk8kgy.us.auth0.com",
+      },
       memorySize: 1769,
     });
 
     const apiAuth = new TokenAuthorizer(this, "tenant-authorizer", {
       identitySource: IdentitySource.header("x-tenant-auth"),
       resultsCacheTtl: Duration.seconds(3600),
-      // TODO update this
-      validationRegex: "true",
+      validationRegex: JWT_REGEX,
       handler: authorizer,
     });
 
