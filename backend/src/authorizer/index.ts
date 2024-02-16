@@ -2,6 +2,7 @@ import {
   APIGatewayAuthorizerResult,
   APIGatewayEventRequestContextV2,
   APIGatewayTokenAuthorizerEvent,
+  Callback,
 } from "aws-lambda";
 import { JwtPayload, decode, verify } from "jsonwebtoken";
 import JwksRsa from "jwks-rsa";
@@ -49,7 +50,6 @@ const validateClaims = async (
       audience: getAudience(),
       issuer: get_Jwt_Issuer(),
     });
-    console.debug("auth claims: ", authClaims);
 
     return authClaims;
   } catch (err) {
@@ -64,7 +64,8 @@ const validateClaims = async (
 
 export const handler = async (
   event: APIGatewayTokenAuthorizerEvent,
-  context: APIGatewayEventRequestContextV2
+  context: APIGatewayEventRequestContextV2,
+  callback: Callback<APIGatewayAuthorizerResult>
 ): Promise<APIGatewayAuthorizerResult> => {
   console.debug("Authorizer event: ", event);
   console.debug("Authorizer context: ", context);
@@ -73,11 +74,23 @@ export const handler = async (
 
   const token = event.authorizationToken;
 
-  const claims = await validateClaims(token);
-  console.debug("claims: ", claims);
+  let claims;
+  try {
+    claims = await validateClaims(token);
+    console.debug("claims: ", claims);
+  } catch (err) {
+    if (err instanceof AuthorizationError) {
+      // Return 401
+      callback("Unauthorized");
+    }
+  }
+
+  const principalId =
+    typeof claims?.sub === "string" ? claims.sub : "Unknown principal";
 
   return {
-    principalId: "abcdefgh", // The principal user identification associated with the token sent by the client.
+    // The principal user identification associated with the token sent by the client.
+    principalId,
     policyDocument: {
       Version: "2012-10-17",
       Statement: [
