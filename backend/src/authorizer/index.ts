@@ -35,10 +35,11 @@ const validateClaims = async (
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
-    jwksUri: `${get_Jwt_Issuer()}/.well-known/jwks.json`,
+    jwksUri: `${get_Jwt_Issuer()}.well-known/jwks.json`,
     timeout: 5000,
   });
 
+  // TODO handle jwksClient errors
   const signingKey = await jwksClient.getSigningKey(keyId);
   const publicKey = signingKey.getPublicKey();
 
@@ -96,12 +97,3 @@ export const handler = async (
   };
   //   usageIdentifierKey: "{api-key}",
 };
-
-handler(
-  {
-    type: "TOKEN",
-    authorizationToken: process.env.AUTH_TOKEN || "Invalid token",
-    methodArn: "abc123",
-  },
-  {} as any
-);

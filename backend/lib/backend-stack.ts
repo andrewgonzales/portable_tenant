@@ -47,7 +47,7 @@ export class BackendStack extends Stack {
       entry: path.join(__dirname, "..", "src/authorizer/index.ts"),
       environment: {
         JWT_AUDIENCE: "https://portable-tenant-jwt-authorizer",
-        JWT_ISSUER: "https://dev-jkt2t1ffhfzk8kgy.us.auth0.com",
+        JWT_ISSUER: "https://dev-jkt2t1ffhfzk8kgy.us.auth0.com/",
       },
       memorySize: 1769,
     });
